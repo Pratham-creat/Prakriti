@@ -64,7 +64,7 @@ export default function PlantOutward() {
       const [speciesRes, stockRes, outwardRes] = await Promise.all([
         api.get("/masters/species"),
         api.get("/stock"),
-        api.get("/outward"),
+        Promise.resolve({ data: [] }),
       ]);
 
       setSpecies(speciesRes.data);
@@ -826,7 +826,7 @@ export default function PlantOutward() {
             { key: "quantity", label: "Quantity" },
             { key: "reference", label: "Reference" },
           ]}
-          data={outward}
+          rows={outward}
         />
       </Section>
     </div>
