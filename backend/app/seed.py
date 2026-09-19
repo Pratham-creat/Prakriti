@@ -4,14 +4,44 @@ from . import auth, models
 
 
 def seed_data(db: Session):
-    if db.query(models.User).first():
+    existing_user = db.query(models.User).first()
+
+    if existing_user:
+        legacy_campa = db.query(models.SchemeHead).filter(
+            models.SchemeHead.name == "Plantation Maintenance"
+        ).first()
+
+        if legacy_campa:
+            legacy_campa.name = "CAMPA"
+            db.flush()
+
+            components = (
+                db.query(models.FundComponent)
+                .filter(models.FundComponent.scheme_head_id == legacy_campa.id)
+                .order_by(models.FundComponent.id)
+                .all()
+            )
+
+            if components:
+                components[0].name = "Plantation"
+            if len(components) > 1:
+                components[1].name = "Nursery"
+            if not any(c.name == "Labour" for c in components):
+                db.add(
+                    models.FundComponent(
+                        name="Labour",
+                        scheme_head_id=legacy_campa.id,
+                    )
+                )
+
+        db.commit()
         return
 
     fy = models.FinancialYear(name="2026-27")
     quarters = [models.Quarter(name=n) for n in ["Q1", "Q2", "Q3", "Q4"]]
     schemes = [
         models.SchemeHead(name="Plantation"),
-        models.SchemeHead(name="Plantation Maintenance"),
+        models.SchemeHead(name="CAMPA"),
         models.SchemeHead(name="Nursery Operations"),
     ]
     species = [models.Species(name=n) for n in ["Neem", "Teak", "Bamboo"]]
@@ -23,8 +53,9 @@ def seed_data(db: Session):
 
     db.add_all(
         [
-            models.FundComponent(name="General", scheme_head_id=schemes[1].id),
-            models.FundComponent(name="Field Maintenance", scheme_head_id=schemes[1].id),
+            models.FundComponent(name="Plantation", scheme_head_id=schemes[1].id),
+            models.FundComponent(name="Nursery", scheme_head_id=schemes[1].id),
+            models.FundComponent(name="Labour", scheme_head_id=schemes[1].id),
         ]
     )
 
@@ -53,6 +84,7 @@ def seed_data(db: Session):
             financial_year_id=fy.id,
             applicable_quarter_id=quarters[0].id,
             scheme_head_id=schemes[1].id,
+            component_id=None,
             amount=100000,
             receipt_date=date(2026, 4, 12),
             remarks="April receipt for Q1",
@@ -63,6 +95,7 @@ def seed_data(db: Session):
             financial_year_id=fy.id,
             applicable_quarter_id=quarters[0].id,
             scheme_head_id=schemes[1].id,
+            component_id=None,
             amount=120000,
             receipt_date=date(2026, 8, 10),
             remarks="August receipt still tagged to Q1",
@@ -81,7 +114,7 @@ def seed_data(db: Session):
             transaction_date=date(2026, 5, 2),
             financial_year_id=fy.id,
             applicable_quarter_id=quarters[0].id,
-            scheme_head_id=schemes[0].id,
+            scheme_head_id=schemes[1].id,
             remarks="Demo purchase",
         )
     )
