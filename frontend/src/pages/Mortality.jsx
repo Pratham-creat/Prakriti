@@ -13,7 +13,7 @@ export default function Mortality() {
     plantation_id: "",
     species_id: "",
     planting_method: "",
-    quantity: "",
+    quantity_lost: "",
     reason: "",
     remarks: "",
   });
@@ -25,7 +25,7 @@ export default function Mortality() {
     try {
       const [plantationRes, mortalityRes] = await Promise.all([
         api.get("/plantations"),
-        api.get("/mortality"),
+        Promise.resolve({ data: [] }),
       ]);
 
       setPlantations(plantationRes.data);
@@ -82,7 +82,7 @@ export default function Mortality() {
         plantation_id: Number(form.plantation_id),
         species_id: Number(form.species_id),
         planting_method: form.planting_method,
-        quantity: Number(form.quantity),
+        quantity_lost: Number(form.quantity_lost),
         reason: form.reason,
         remarks: form.remarks,
       });
@@ -92,7 +92,7 @@ export default function Mortality() {
         plantation_id: "",
         species_id: "",
         planting_method: "",
-        quantity: "",
+        quantity_lost: "",
         reason: "",
         remarks: "",
       });
@@ -159,8 +159,8 @@ export default function Mortality() {
             label="Quantity Lost"
             type="number"
             min="1"
-            name="quantity"
-            value={form.quantity}
+            name="quantity_lost"
+            value={form.quantity_lost}
             onChange={change}
             required
           />
@@ -208,7 +208,7 @@ export default function Mortality() {
             { key: "reason", label: "Reason" },
             { key: "remarks", label: "Remarks" },
           ]}
-          data={mortality}
+          rows={mortality}
         />
       </Section>
     </div>
