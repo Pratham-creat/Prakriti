@@ -228,7 +228,7 @@ export default function Plantation() {
             { key: "planting_method", label: "Method" },
             { key: "quantity", label: "Quantity" },
           ]}
-          data={plantations}
+          rows={plantations}
         />
       </Section>
     </div>
