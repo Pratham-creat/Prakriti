@@ -97,6 +97,8 @@ export default function PlantOutward() {
     try {
       await api.post("/outward/government-challan", {
         ...government,
+        date: government.challan_date,
+        challan_reference_mode: government.online_reference,
         species_id: Number(government.species_id),
         quantity: Number(government.quantity),
         rate: Number(government.rate || 0),
@@ -118,10 +120,7 @@ export default function PlantOutward() {
 
       await loadData();
     } catch (err) {
-      setError(
-        err.response?.data?.detail ||
-          "Failed to create government challan."
-      );
+      setError(err.userMessage || "Failed to create government challan.");
     } finally {
       setLoading(false);
     }
@@ -135,6 +134,8 @@ export default function PlantOutward() {
     try {
       await api.post("/outward/private-sale", {
         ...privateSale,
+        date: new Date().toISOString().split("T")[0],
+        utr_reference: privateSale.utr,
         species_id: Number(privateSale.species_id),
         quantity: Number(privateSale.quantity),
         rate: Number(privateSale.rate || 0),
@@ -157,9 +158,7 @@ export default function PlantOutward() {
 
       await loadData();
     } catch (err) {
-      setError(
-        err.response?.data?.detail || "Failed to create private sale."
-      );
+      setError(err.userMessage || "Failed to create private sale.");
     } finally {
       setLoading(false);
     }
@@ -173,6 +172,8 @@ export default function PlantOutward() {
     try {
       await api.post("/outward/hq-order", {
         ...hqOrder,
+        date: hqOrder.order_date,
+        hq_order_number: hqOrder.order_reference,
         species_id: Number(hqOrder.species_id),
         quantity: Number(hqOrder.quantity),
       });
@@ -192,9 +193,7 @@ export default function PlantOutward() {
 
       await loadData();
     } catch (err) {
-      setError(
-        err.response?.data?.detail || "Failed to create HQ order."
-      );
+      setError(err.userMessage || "Failed to create HQ order.");
     } finally {
       setLoading(false);
     }
