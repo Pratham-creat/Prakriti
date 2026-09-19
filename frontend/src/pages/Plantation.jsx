@@ -13,7 +13,7 @@ export default function Plantation() {
 
   const [form, setForm] = useState({
     financial_year_id: "",
-    quarter_id: "",
+    applicable_quarter_id: "",
     scheme_head_id: "",
     date: new Date().toISOString().split("T")[0],
     species_id: "",
@@ -36,7 +36,7 @@ export default function Plantation() {
         api.get("/plantations"),
         api.get("/masters/species"),
         api.get("/masters/financial-years"),
-        api.get("/quarters"),
+        api.get("/masters/quarters"),
         api.get("/masters/schemes"),
       ]);
 
@@ -69,7 +69,7 @@ export default function Plantation() {
     try {
       await api.post("/plantations", {
         financial_year_id: Number(form.financial_year_id),
-        quarter_id: Number(form.quarter_id),
+        applicable_quarter_id: Number(form.applicable_quarter_id),
         scheme_head_id: Number(form.scheme_head_id),
         date: form.date,
         species_id: Number(form.species_id),
@@ -126,8 +126,8 @@ export default function Plantation() {
           <Field
             as="select"
             label="Quarter"
-            name="quarter_id"
-            value={form.quarter_id}
+            name="applicable_quarter_id"
+            value={form.applicable_quarter_id}
             onChange={change}
             required
           >
