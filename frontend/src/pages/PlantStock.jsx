@@ -109,7 +109,7 @@ export default function PlantStock() {
               { key: "outward", label: "Outward" },
               { key: "current_stock", label: "Current Stock" },
             ]}
-            data={stock}
+            rows={stock}
           />
         )}
       </Section>
