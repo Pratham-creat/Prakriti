@@ -1,8 +1,11 @@
 export default function Table({
-  columns,
+  columns = [],
   rows,
-  empty = 'No records found.',
+  data,
+  empty = "No records found.",
 }) {
+  const items = Array.isArray(rows) ? rows : Array.isArray(data) ? data : [];
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full text-left text-sm">
@@ -20,8 +23,8 @@ export default function Table({
         </thead>
 
         <tbody>
-          {rows.length ? (
-            rows.map((row, index) => (
+          {items.length ? (
+            items.map((row, index) => (
               <tr
                 key={row.id ?? index}
                 className="border-b border-slate-100 last:border-0"
@@ -31,9 +34,7 @@ export default function Table({
                     key={column.key}
                     className="px-4 py-3 text-slate-700"
                   >
-                    {column.render
-                      ? column.render(row)
-                      : row[column.key]}
+                    {column.render ? column.render(row) : row[column.key]}
                   </td>
                 ))}
               </tr>
@@ -41,7 +42,7 @@ export default function Table({
           ) : (
             <tr>
               <td
-                colSpan={columns.length}
+                colSpan={columns.length || 1}
                 className="px-4 py-8 text-center text-slate-500"
               >
                 {empty}
@@ -51,5 +52,5 @@ export default function Table({
         </tbody>
       </table>
     </div>
-  )
+  );
 }
