@@ -65,7 +65,7 @@ export default function FundReceived() {
         component_id: form.component_id || null,
       })
 
-      setForm(empty)
+      setForm({ ...empty })
       setMessage('Fund receipt saved.')
 
       await load()
