@@ -4,7 +4,7 @@ const api = axios.create({
   baseURL: "http://127.0.0.1:8000",
 });
 
-// Automatically attach JWT token to every request
+// Attach the stored JWT to protected requests.
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -18,7 +18,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Login
+// Authentication
 api.login = async ({ username, password }) => {
   const response = await api.post("/auth/login", {
     username,
@@ -28,15 +28,77 @@ api.login = async ({ username, password }) => {
   return response.data;
 };
 
-// Dashboard
+// Dashboard / stock
 api.dashboard = async () => {
   const response = await api.get("/dashboard");
   return response.data;
 };
 
-// Stock
 api.stock = async () => {
   const response = await api.get("/stock");
+  return response.data;
+};
+
+// Masters
+api.financialYears = async () => {
+  const response = await api.get("/masters/financial-years");
+  return response.data;
+};
+
+api.quarters = async () => {
+  const response = await api.get("/masters/quarters");
+  return response.data;
+};
+
+api.schemes = async () => {
+  const response = await api.get("/masters/schemes");
+  return response.data;
+};
+
+api.species = async () => {
+  const response = await api.get("/masters/species");
+  return response.data;
+};
+
+api.materials = async () => {
+  const response = await api.get("/masters/materials");
+  return response.data;
+};
+
+api.fundComponents = async (schemeHeadId) => {
+  const response = await api.get("/masters/fund-components", {
+    params: schemeHeadId
+      ? { scheme_head_id: schemeHeadId }
+      : undefined,
+  });
+
+  return response.data;
+};
+
+// Funds
+api.funds = async () => {
+  const response = await api.get("/fund-receipts");
+  return response.data;
+};
+
+api.createFund = async (payload) => {
+  const response = await api.post("/fund-receipts", payload);
+  return response.data;
+};
+
+// Labour / attendance
+api.labour = async () => {
+  const response = await api.get("/labour");
+  return response.data;
+};
+
+api.attendance = async () => {
+  const response = await api.get("/attendance");
+  return response.data;
+};
+
+api.createAttendance = async (payload) => {
+  const response = await api.post("/attendance", payload);
   return response.data;
 };
 
@@ -57,6 +119,5 @@ export function clearToken() {
   localStorage.removeItem("token");
 }
 
-// IMPORTANT: export api itself
 export { api };
 export default api;
