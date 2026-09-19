@@ -17,14 +17,13 @@ import Sidebar from "./components/Sidebar";
 
 import { getToken, clearToken } from "./api";
 
-
 export default function App() {
   const [token, setTokenState] = useState(getToken());
-  const [page, setPage] = useState("dashboard");
+  const [page, setPage] = useState("Dashboard");
 
   function handleLogin() {
     setTokenState(getToken());
-    setPage("dashboard");
+    setPage("Dashboard");
   }
 
   function handleLogout() {
@@ -38,37 +37,37 @@ export default function App() {
 
   function renderPage() {
     switch (page) {
-      case "dashboard":
+      case "Dashboard":
         return <Dashboard />;
 
-      case "fund":
+      case "Fund Received":
         return <FundReceived />;
 
-      case "expenditure":
+      case "Expenditure":
         return <Expenditure />;
 
-      case "labour":
+      case "Labour Master":
         return <Labour />;
 
-      case "attendance":
+      case "Attendance":
         return <Attendance />;
 
-      case "plantation":
+      case "Plantation":
         return <Plantation />;
 
-      case "maintenance":
+      case "Maintenance":
         return <Maintenance />;
 
-      case "mortality":
+      case "Mortality":
         return <Mortality />;
 
-      case "outward":
+      case "Plant Outward":
         return <PlantOutward />;
 
-      case "stock":
+      case "Plant Stock":
         return <PlantStock />;
 
-      case "reports":
+      case "Reports":
         return <Reports />;
 
       default:
@@ -79,7 +78,7 @@ export default function App() {
   return (
     <div className="flex min-h-screen bg-gray-100">
       <Sidebar
-        currentPage={page}
+        active={page}
         onNavigate={setPage}
         onLogout={handleLogout}
       />
