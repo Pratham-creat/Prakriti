@@ -151,7 +151,7 @@ export default function Labour() {
             { key: "samagra_id", label: "Samagra ID" },
             { key: "ifsc", label: "IFSC" },
           ]}
-          data={labour}
+          rows={labour}
         />
       </Section>
     </div>
