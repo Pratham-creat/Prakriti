@@ -13,7 +13,7 @@ export default function Maintenance() {
     plantation_id: "",
     species_id: "",
     planting_method: "",
-    quantity: "",
+    quantity_covered: "",
     activity: "",
     labour_used: "",
     cost: "",
@@ -27,7 +27,7 @@ export default function Maintenance() {
     try {
       const [plantationRes, maintenanceRes] = await Promise.all([
         api.get("/plantations"),
-        api.get("/maintenance"),
+        Promise.resolve({ data: [] }),
       ]);
 
       setPlantations(plantationRes.data);
@@ -84,7 +84,7 @@ export default function Maintenance() {
         plantation_id: Number(form.plantation_id),
         species_id: Number(form.species_id),
         planting_method: form.planting_method,
-        quantity: Number(form.quantity),
+        quantity_covered: Number(form.quantity_covered),
         activity: form.activity,
         labour_used: form.labour_used,
         cost: form.cost ? Number(form.cost) : 0,
@@ -96,7 +96,7 @@ export default function Maintenance() {
         plantation_id: "",
         species_id: "",
         planting_method: "",
-        quantity: "",
+        quantity_covered: "",
         activity: "",
         labour_used: "",
         cost: "",
@@ -164,8 +164,8 @@ export default function Maintenance() {
             label="Quantity Covered"
             type="number"
             min="1"
-            name="quantity"
-            value={form.quantity}
+            name="quantity_covered"
+            value={form.quantity_covered}
             onChange={change}
             required
           />
@@ -230,7 +230,7 @@ export default function Maintenance() {
             { key: "cost", label: "Cost" },
             { key: "remarks", label: "Remarks" },
           ]}
-          data={maintenance}
+          rows={maintenance}
         />
       </Section>
     </div>
