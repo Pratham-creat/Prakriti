@@ -102,6 +102,41 @@ api.createAttendance = async (payload) => {
   return response.data;
 };
 
+// Convert FastAPI validation errors into a readable message.
+function formatApiError(error) {
+  const detail = error?.response?.data?.detail;
+
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => {
+        if (typeof item === "string") return item;
+        const location = Array.isArray(item?.loc)
+          ? item.loc.join(".")
+          : "request";
+        return `${location}: ${item?.msg || "Invalid value"}`;
+      })
+      .join(" | ");
+  }
+
+  if (detail && typeof detail === "object") {
+    return detail.msg || JSON.stringify(detail);
+  }
+
+  if (typeof detail === "string") {
+    return detail;
+  }
+
+  return error?.message || "Request failed.";
+}
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    error.userMessage = formatApiError(error);
+    return Promise.reject(error);
+  }
+);
+
 // Token helpers
 export function setToken(token) {
   if (token) {
