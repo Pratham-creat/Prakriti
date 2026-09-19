@@ -109,7 +109,7 @@ export default function Reports() {
                   { key: "expenditure", label: "Expenditure" },
                   { key: "balance", label: "Balance" },
                 ]}
-                data={fund}
+                rows={fund}
               />
             </Section>
           )}
@@ -125,7 +125,7 @@ export default function Reports() {
                   { key: "outward", label: "Outward" },
                   { key: "current_stock", label: "Current Stock" },
                 ]}
-                data={plant}
+                rows={plant}
               />
             </Section>
           )}
@@ -141,7 +141,7 @@ export default function Reports() {
                   { key: "absent", label: "Absent" },
                   { key: "payment", label: "Payment" },
                 ]}
-                data={labour}
+                rows={labour}
               />
             </Section>
           )}
@@ -157,7 +157,7 @@ export default function Reports() {
                   { key: "reference", label: "Reference" },
                   { key: "recipient", label: "Recipient / Institution" },
                 ]}
-                data={outward}
+                rows={outward}
               />
             </Section>
           )}
