@@ -48,7 +48,16 @@ export default function FundReceived() {
 
   useEffect(() => {
     api.fundComponents(form.scheme_head_id)
-      .then(setComponents)
+      .then((data) => {
+        setComponents(data)
+        setForm((current) => ({
+          ...current,
+          component_id:
+            current.component_id && data.some((item) => item.id === current.component_id)
+              ? current.component_id
+              : data[0]?.id ?? null,
+        }))
+      })
       .catch(() => setComponents([]))
   }, [form.scheme_head_id])
 
@@ -153,7 +162,7 @@ export default function FundReceived() {
                 })
               }
             >
-              <option value="">Optional</option>
+              <option value="" disabled>Select Component</option>
 
               {components.map((x) => (
                 <option key={x.id} value={x.id}>
