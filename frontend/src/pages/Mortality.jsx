@@ -25,7 +25,7 @@ export default function Mortality() {
     try {
       const [plantationRes, mortalityRes] = await Promise.all([
         api.get("/plantations"),
-        Promise.resolve({ data: [] }),
+        api.get("/mortality"),
       ]);
 
       setPlantations(plantationRes.data);
@@ -204,7 +204,7 @@ export default function Mortality() {
             { key: "date", label: "Date" },
             { key: "species_name", label: "Species" },
             { key: "planting_method", label: "Method" },
-            { key: "quantity", label: "Quantity Lost" },
+            { key: "quantity_lost", label: "Quantity Lost" },
             { key: "reason", label: "Reason" },
             { key: "remarks", label: "Remarks" },
           ]}
