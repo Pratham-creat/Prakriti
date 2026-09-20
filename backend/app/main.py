@@ -538,6 +538,35 @@ def create_hq_order(payload: schemas.HQOrderCreate, db: Session = Depends(get_db
     return {"id": outward.id}
 
 
+@app.get("/outward")
+def list_outward(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    require_role(user, {models.Role.admin, models.Role.operator})
+    species_map = {
+        s.id: s.name
+        for s in db.execute(select(models.Species)).scalars().all()
+    }
+    rows = db.execute(
+        select(models.PlantOutward).order_by(
+            models.PlantOutward.date.desc(),
+            models.PlantOutward.id.desc()
+        )
+    ).scalars().all()
+    return [
+        {
+            "id": row.id,
+            "date": row.date,
+            "type": row.type,
+            "species_id": row.species_id,
+            "species_name": species_map.get(row.species_id, "Unknown"),
+            "planting_method": row.planting_method,
+            "quantity": row.quantity,
+            "reference_number": row.reference_number,
+            "recipient": row.recipient,
+        }
+        for row in rows
+    ]
+
+
 @app.get("/stock", response_model=list[schemas.StockItem])
 def get_stock(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     require_role(user, {models.Role.admin, models.Role.operator})
