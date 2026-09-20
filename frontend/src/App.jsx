@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import FundReceived from "./pages/FundReceived";
 import Expenditure from "./pages/Expenditure";
 import Labour from "./pages/Labour";
+import LabourPayments from "./pages/LabourPayments";
 import Attendance from "./pages/Attendance";
 import Plantation from "./pages/Plantation";
 import Maintenance from "./pages/Maintenance";
@@ -48,6 +49,9 @@ export default function App() {
 
       case "Labour Master":
         return <Labour />;
+
+      case "Labour Payments":
+        return <LabourPayments />;
 
       case "Attendance":
         return <Attendance />;
