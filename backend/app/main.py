@@ -338,10 +338,15 @@ def create_plantation(payload: schemas.PlantationCreate, db: Session = Depends(g
 def list_plantations(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     require_role(user, {models.Role.admin, models.Role.operator})
     rows = db.execute(select(models.Plantation).order_by(models.Plantation.id)).scalars().all()
+    species_map = {
+        s.id: s.name
+        for s in db.execute(select(models.Species)).scalars().all()
+    }
     return [
         {
             "id": r.id,
             "species_id": r.species_id,
+            "species_name": species_map.get(r.species_id, "Unknown"),
             "planting_method": r.planting_method,
             "quantity": r.quantity,
             "date": r.date,
