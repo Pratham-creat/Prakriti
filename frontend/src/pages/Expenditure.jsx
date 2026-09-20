@@ -185,7 +185,7 @@ export default function Expenditure() {
           columns={[
             { key: "transaction_date", label: "Date" },
             { key: "type", label: "Type" },
-            { key: "material_id", label: "Material ID" },
+            { key: "material_name", label: "Material" },
             { key: "quantity", label: "Quantity" },
             { key: "unit", label: "Unit" },
             { key: "rate", label: "Rate" },
