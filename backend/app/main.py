@@ -404,6 +404,30 @@ def create_mortality(payload: schemas.MortalityCreate, db: Session = Depends(get
     return {"id": row.id}
 
 
+@app.get("/mortality")
+def list_mortality(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    require_role(user, {models.Role.admin, models.Role.operator})
+    rows = db.execute(select(models.MortalityRecord).order_by(models.MortalityRecord.date.desc(), models.MortalityRecord.id.desc())).scalars().all()
+    species_map = {
+        s.id: s.name
+        for s in db.execute(select(models.Species)).scalars().all()
+    }
+    return [
+        {
+            "id": row.id,
+            "date": row.date,
+            "plantation_id": row.plantation_id,
+            "species_id": row.species_id,
+            "species_name": species_map.get(row.species_id, "Unknown"),
+            "planting_method": row.planting_method,
+            "quantity_lost": row.quantity_lost,
+            "reason": row.reason,
+            "remarks": row.remarks,
+        }
+        for row in rows
+    ]
+
+
 def create_outward_or_reject(db: Session, species_id: int, planting_method: models.PlantingMethod, quantity: int):
     available = services.get_available_stock(db, species_id, planting_method)
     if quantity > available:
