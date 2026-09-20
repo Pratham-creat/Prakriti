@@ -11,6 +11,7 @@ const groups = [
     title: "Nursery Operations",
     items: [
       "Labour Master",
+      "Labour Payments",
       "Attendance",
       "Plantation",
       "Maintenance",
