@@ -19,7 +19,11 @@ export default function Field({
       })
     : (() => {
         const Control = as;
-        return <Control className={combinedClassName} {...props} />;
+        return (
+          <Control className={combinedClassName} {...props}>
+            {children}
+          </Control>
+        );
       })();
 
   return (
