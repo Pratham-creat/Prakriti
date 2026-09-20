@@ -320,17 +320,26 @@ def list_material_transactions(type: models.MaterialTransactionType | None = Non
     if type:
         stmt = stmt.where(models.MaterialTransaction.type == type)
     rows = db.execute(stmt.order_by(models.MaterialTransaction.id)).scalars().all()
+    material_map = {
+        m.id: m.name
+        for m in db.execute(select(models.Material)).scalars().all()
+    }
     return [
         {
             "id": r.id,
             "type": r.type,
             "material_id": r.material_id,
+            "material_name": material_map.get(r.material_id, "Unknown"),
             "quantity": r.quantity,
             "unit": r.unit,
             "rate": float(r.rate) if r.rate is not None else None,
             "total_amount": float(r.total_amount),
             "supplier_source": r.supplier_source,
             "transaction_date": r.transaction_date,
+            "financial_year_id": r.financial_year_id,
+            "applicable_quarter_id": r.applicable_quarter_id,
+            "scheme_head_id": r.scheme_head_id,
+            "remarks": r.remarks,
         }
         for r in rows
     ]
