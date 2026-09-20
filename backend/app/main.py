@@ -365,6 +365,32 @@ def create_maintenance(payload: schemas.MaintenanceCreate, db: Session = Depends
     return {"id": row.id}
 
 
+@app.get("/maintenance")
+def list_maintenance(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    require_role(user, {models.Role.admin, models.Role.operator})
+    rows = db.execute(select(models.MaintenanceRecord).order_by(models.MaintenanceRecord.date.desc(), models.MaintenanceRecord.id.desc())).scalars().all()
+    species_map = {
+        s.id: s.name
+        for s in db.execute(select(models.Species)).scalars().all()
+    }
+    return [
+        {
+            "id": row.id,
+            "date": row.date,
+            "plantation_id": row.plantation_id,
+            "species_id": row.species_id,
+            "species_name": species_map.get(row.species_id, "Unknown"),
+            "planting_method": row.planting_method,
+            "quantity_covered": row.quantity_covered,
+            "activity": row.activity,
+            "labour_used": row.labour_used,
+            "cost": float(row.cost) if row.cost is not None else 0,
+            "remarks": row.remarks,
+        }
+        for row in rows
+    ]
+
+
 @app.post("/mortality")
 def create_mortality(payload: schemas.MortalityCreate, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     require_role(user, {models.Role.admin, models.Role.operator})
