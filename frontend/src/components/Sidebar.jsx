@@ -55,7 +55,7 @@ export default function Sidebar({
                   className={`mb-1 w-full rounded-lg px-3 py-2.5 text-left text-sm transition ${
                     active === item
                       ? "bg-emerald-50 font-semibold text-emerald-700"
-                      : "text-slate-600 hover:bg-slate-50"
+                      : "text-green-300 hover:bg-slate-50"
                   }`}
                 >
                   {item}
