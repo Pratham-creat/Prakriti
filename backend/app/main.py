@@ -653,24 +653,54 @@ def dashboard(db: Session = Depends(get_db), user: models.User = Depends(get_cur
 @app.get("/reports/fund")
 def fund_report(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     require_role(user, {models.Role.admin, models.Role.operator})
-    rows = db.execute(
-        select(models.FundReceipt.applicable_quarter_id, models.FundReceipt.scheme_head_id, func.sum(models.FundReceipt.amount)).group_by(
-            models.FundReceipt.applicable_quarter_id, models.FundReceipt.scheme_head_id
+
+    fund_rows = db.execute(
+        select(
+            models.FundReceipt.applicable_quarter_id,
+            models.FundReceipt.scheme_head_id,
+            func.sum(models.FundReceipt.amount),
+        ).group_by(
+            models.FundReceipt.applicable_quarter_id,
+            models.FundReceipt.scheme_head_id,
         )
     ).all()
-    exp_rows = db.execute(
-        select(models.MaterialTransaction.applicable_quarter_id, models.MaterialTransaction.scheme_head_id, func.sum(models.MaterialTransaction.total_amount)).where(
+
+    material_rows = db.execute(
+        select(
+            models.MaterialTransaction.applicable_quarter_id,
+            models.MaterialTransaction.scheme_head_id,
+            func.sum(models.MaterialTransaction.total_amount),
+        ).where(
             models.MaterialTransaction.type == models.MaterialTransactionType.purchase
-        ).group_by(models.MaterialTransaction.applicable_quarter_id, models.MaterialTransaction.scheme_head_id)
+        ).group_by(
+            models.MaterialTransaction.applicable_quarter_id,
+            models.MaterialTransaction.scheme_head_id,
+        )
+    ).all()
+
+    labour_rows = db.execute(
+        select(
+            models.LabourPayment.applicable_quarter_id,
+            models.LabourPayment.scheme_head_id,
+            func.sum(models.LabourPayment.amount),
+        ).group_by(
+            models.LabourPayment.applicable_quarter_id,
+            models.LabourPayment.scheme_head_id,
+        )
     ).all()
 
     q = {r.id: r.name for r in db.execute(select(models.Quarter)).scalars().all()}
     schemes = {r.id: r.name for r in db.execute(select(models.SchemeHead)).scalars().all()}
-    expenditure_map = {(x[0], x[1]): float(x[2] or 0) for x in exp_rows}
+
+    expenditure_map = defaultdict(float)
+    for quarter_id, scheme_id, amount in material_rows:
+        expenditure_map[(quarter_id, scheme_id)] += float(amount or 0)
+    for quarter_id, scheme_id, amount in labour_rows:
+        expenditure_map[(quarter_id, scheme_id)] += float(amount or 0)
 
     report = []
-    for quarter_id, scheme_id, received in rows:
-        expenditure = expenditure_map.get((quarter_id, scheme_id), 0.0)
+    for quarter_id, scheme_id, received in fund_rows:
+        expenditure = expenditure_map[(quarter_id, scheme_id)]
         report.append(
             {
                 "quarter": q.get(quarter_id),
