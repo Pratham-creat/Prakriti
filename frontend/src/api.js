@@ -97,6 +97,17 @@ api.createFund = async (payload) => {
   return response.data;
 };
 
+// Expenditure / material transactions
+api.materialTransactions = async () => {
+  const response = await api.get("/materials/transactions");
+  return response.data;
+};
+
+api.createMaterialTransaction = async (payload) => {
+  const response = await api.post("/materials/transactions", payload);
+  return response.data;
+};
+
 // Labour / attendance
 api.labour = async () => {
   const response = await api.get("/labour");
