@@ -75,6 +75,17 @@ api.fundComponents = async (schemeHeadId) => {
   return response.data;
 };
 
+// Labour payments
+api.labourPayments = async () => {
+  const response = await api.get("/labour/payments");
+  return response.data;
+};
+
+api.createLabourPayment = async (payload) => {
+  const response = await api.post("/labour/payments", payload);
+  return response.data;
+};
+
 // Funds
 api.funds = async () => {
   const response = await api.get("/fund-receipts");
