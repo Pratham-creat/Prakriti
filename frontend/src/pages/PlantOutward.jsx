@@ -132,14 +132,36 @@ export default function PlantOutward() {
     setError("");
 
     try {
-      await api.post("/outward/private-sale", {
-        ...privateSale,
+      const privateSalePayload = {
         date: new Date().toISOString().split("T")[0],
-        utr_reference: privateSale.utr,
+        buyer: privateSale.buyer,
+        location: privateSale.location || null,
+        collector: privateSale.collector || null,
         species_id: Number(privateSale.species_id),
+        planting_method: privateSale.planting_method,
         quantity: Number(privateSale.quantity),
         rate: Number(privateSale.rate || 0),
-      });
+        receipt_number: privateSale.receipt_number,
+        payment_method: privateSale.payment_method,
+        utr_reference:
+          privateSale.payment_method === "online"
+            ? privateSale.utr || null
+            : null,
+        cheque_number:
+          privateSale.payment_method === "cheque"
+            ? privateSale.cheque_number || null
+            : null,
+        cheque_date:
+          privateSale.payment_method === "cheque" && privateSale.cheque_date
+            ? privateSale.cheque_date
+            : null,
+        cheque_bank:
+          privateSale.payment_method === "cheque"
+            ? privateSale.cheque_bank || null
+            : null,
+      };
+
+      await api.post("/outward/private-sale", privateSalePayload);
 
       setPrivateSale({
         ...privateSale,
