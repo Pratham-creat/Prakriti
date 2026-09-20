@@ -1,4 +1,5 @@
 from datetime import date
+import os
 from sqlalchemy.orm import Session
 from . import auth, models
 
@@ -65,6 +66,12 @@ def seed_data(db: Session):
             models.User(username="operator", password_hash=auth.get_password_hash("operator123"), role=models.Role.operator),
         ]
     )
+
+    seed_demo_data = os.getenv("SEED_DEMO_DATA", "true").lower() == "true"
+
+    if not seed_demo_data:
+        db.commit()
+        return
 
     fake_labour = [
         models.Labour(
