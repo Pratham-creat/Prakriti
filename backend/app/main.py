@@ -197,6 +197,62 @@ def list_labour(db: Session = Depends(get_db), user: models.User = Depends(get_c
     return output
 
 
+@app.post("/labour/payments")
+def create_labour_payment(payload: schemas.LabourPaymentCreate, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    require_role(user, {models.Role.admin, models.Role.operator})
+
+    labour = db.get(models.Labour, payload.labour_id)
+    if not labour:
+        raise HTTPException(status_code=404, detail="Labour worker not found")
+
+    amount = payload.days * payload.wage_rate
+    row = models.LabourPayment(
+        **payload.model_dump(),
+        amount=amount,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return {"id": row.id, "amount": float(row.amount)}
+
+
+@app.get("/labour/payments")
+def list_labour_payments(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    require_role(user, {models.Role.admin, models.Role.operator})
+    rows = db.execute(
+        select(models.LabourPayment).order_by(
+            models.LabourPayment.payment_date.desc(),
+            models.LabourPayment.id.desc()
+        )
+    ).scalars().all()
+
+    labour_map = {
+        row.id: row.name
+        for row in db.execute(select(models.Labour)).scalars().all()
+    }
+    return [
+        {
+            "id": row.id,
+            "labour_id": row.labour_id,
+            "labour_name": labour_map.get(row.labour_id, "Unknown"),
+            "payment_date": row.payment_date,
+            "financial_year_id": row.financial_year_id,
+            "applicable_quarter_id": row.applicable_quarter_id,
+            "scheme_head_id": row.scheme_head_id,
+            "days": row.days,
+            "wage_rate": float(row.wage_rate),
+            "amount": float(row.amount),
+            "payment_method": row.payment_method,
+            "reference_number": row.reference_number,
+            "cheque_number": row.cheque_number,
+            "cheque_date": row.cheque_date,
+            "cheque_bank": row.cheque_bank,
+            "remarks": row.remarks,
+        }
+        for row in rows
+    ]
+
+
 @app.post("/fund-receipts")
 def create_fund_receipt(payload: schemas.FundReceiptCreate, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     require_role(user, {models.Role.admin, models.Role.operator})
