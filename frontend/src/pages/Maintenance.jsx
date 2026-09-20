@@ -27,7 +27,7 @@ export default function Maintenance() {
     try {
       const [plantationRes, maintenanceRes] = await Promise.all([
         api.get("/plantations"),
-        Promise.resolve({ data: [] }),
+        api.get("/maintenance"),
       ]);
 
       setPlantations(plantationRes.data);
@@ -86,7 +86,7 @@ export default function Maintenance() {
         planting_method: form.planting_method,
         quantity_covered: Number(form.quantity_covered),
         activity: form.activity,
-        labour_used: form.labour_used,
+        labour_used: form.labour_used ? Number(form.labour_used) : null,
         cost: form.cost ? Number(form.cost) : 0,
         remarks: form.remarks,
       });
@@ -226,7 +226,9 @@ export default function Maintenance() {
           columns={[
             { key: "date", label: "Date" },
             { key: "activity", label: "Activity" },
-            { key: "quantity", label: "Quantity" },
+            { key: "species_name", label: "Species" },
+            { key: "planting_method", label: "Method" },
+            { key: "quantity_covered", label: "Quantity Covered" },
             { key: "cost", label: "Cost" },
             { key: "remarks", label: "Remarks" },
           ]}
