@@ -171,6 +171,22 @@ class HQOrderCreate(OutwardBaseCreate):
     document_reference: str | None = None
 
 
+class LabourPaymentCreate(BaseModel):
+    labour_id: int
+    payment_date: date
+    financial_year_id: int
+    applicable_quarter_id: int
+    scheme_head_id: int
+    days: float = Field(gt=0)
+    wage_rate: float = Field(gt=0)
+    payment_method: PaymentMethod
+    reference_number: str | None = None
+    cheque_number: str | None = None
+    cheque_date: date | None = None
+    cheque_bank: str | None = None
+    remarks: str | None = None
+
+
 class DashboardSummary(BaseModel):
     funds_received: float
     expenditure: float
