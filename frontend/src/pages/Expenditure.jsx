@@ -26,18 +26,20 @@ export default function Expenditure() {
   const [quarters, setQuarters] = useState([]);
   const [schemes, setSchemes] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [labourPayments, setLabourPayments] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const load = async () => {
-    const [materialRes, yearsRes, quartersRes, schemesRes, transactionRes] =
+    const [materialRes, yearsRes, quartersRes, schemesRes, transactionRes, labourPaymentRes] =
       await Promise.all([
         api.materials(),
         api.financialYears(),
         api.quarters(),
         api.schemes(),
         api.materialTransactions(),
+        api.labourPayments(),
       ]);
 
     setMaterials(materialRes);
@@ -45,6 +47,7 @@ export default function Expenditure() {
     setQuarters(quartersRes);
     setSchemes(schemesRes);
     setTransactions(transactionRes);
+    setLabourPayments(labourPaymentRes);
   };
 
   useEffect(() => {
@@ -65,6 +68,17 @@ export default function Expenditure() {
         .reduce((sum, row) => sum + Number(row.total_amount || 0), 0),
     [transactions]
   );
+
+  const labourTotal = useMemo(
+    () =>
+      labourPayments.reduce(
+        (sum, row) => sum + Number(row.amount || 0),
+        0
+      ),
+    [labourPayments]
+  );
+
+  const totalExpenditure = purchaseTotal + labourTotal;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -110,12 +124,12 @@ export default function Expenditure() {
           <p className="mt-1 text-2xl font-bold text-slate-800">₹{purchaseTotal.toLocaleString("en-IN")}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-sm text-slate-500">Transactions</p>
-          <p className="mt-1 text-2xl font-bold text-slate-800">{transactions.length}</p>
+          <p className="text-sm text-slate-500">Labour Payment Expenditure</p>
+          <p className="mt-1 text-2xl font-bold text-slate-800">₹{labourTotal.toLocaleString("en-IN")}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <p className="text-sm text-slate-500">Current Entry Total</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-700">₹{calculatedTotal.toLocaleString("en-IN")}</p>
+          <p className="text-sm text-slate-500">Total Expenditure</p>
+          <p className="mt-1 text-2xl font-bold text-emerald-700">₹{totalExpenditure.toLocaleString("en-IN")}</p>
         </div>
       </div>
 
@@ -178,6 +192,21 @@ export default function Expenditure() {
         </form>
 
         {error && <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
+      </Section>
+
+      <Section title="Labour Payment Expenditure">
+        <Table
+          columns={[
+            { key: "payment_date", label: "Date" },
+            { key: "labour_name", label: "Worker" },
+            { key: "days", label: "Days" },
+            { key: "wage_rate", label: "Rate / Day" },
+            { key: "amount", label: "Amount" },
+            { key: "payment_method", label: "Payment Method" },
+            { key: "reference_number", label: "Reference" },
+          ]}
+          rows={labourPayments}
+        />
       </Section>
 
       <Section title="Expenditure History">
