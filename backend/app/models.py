@@ -133,6 +133,26 @@ class Labour(Base):
     ifsc: Mapped[str] = mapped_column(String(15), nullable=False)
 
 
+class LabourPayment(Base):
+    __tablename__ = "labour_payments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    labour_id: Mapped[int] = mapped_column(ForeignKey("labour.id"), nullable=False)
+    payment_date: Mapped[str] = mapped_column(Date, nullable=False)
+    financial_year_id: Mapped[int] = mapped_column(ForeignKey("financial_years.id"), nullable=False)
+    applicable_quarter_id: Mapped[int] = mapped_column(ForeignKey("quarters.id"), nullable=False)
+    scheme_head_id: Mapped[int] = mapped_column(ForeignKey("scheme_heads.id"), nullable=False)
+    days: Mapped[float] = mapped_column(Float, nullable=False)
+    wage_rate: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
+    payment_method: Mapped[PaymentMethod] = mapped_column(Enum(PaymentMethod), nullable=False)
+    reference_number: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    cheque_number: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    cheque_date: Mapped[str | None] = mapped_column(Date, nullable=True)
+    cheque_bank: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    remarks: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
 class Attendance(Base):
     __tablename__ = "attendance"
 
