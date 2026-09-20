@@ -64,7 +64,7 @@ export default function PlantOutward() {
       const [speciesRes, stockRes, outwardRes] = await Promise.all([
         api.get("/masters/species"),
         api.get("/stock"),
-        Promise.resolve({ data: [] }),
+        api.get("/outward"),
       ]);
 
       setSpecies(speciesRes.data);
@@ -823,7 +823,7 @@ export default function PlantOutward() {
             { key: "species_name", label: "Species" },
             { key: "planting_method", label: "Method" },
             { key: "quantity", label: "Quantity" },
-            { key: "reference", label: "Reference" },
+            { key: "reference_number", label: "Reference" },
           ]}
           rows={outward}
         />
