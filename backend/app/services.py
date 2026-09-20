@@ -55,13 +55,17 @@ def get_available_stock(db: Session, species_id: int, method: models.PlantingMet
 
 def get_dashboard_summary(db: Session):
     funds_received = _to_float(db.scalar(select(func.sum(models.FundReceipt.amount))))
-    expenditure = _to_float(
+    material_expenditure = _to_float(
         db.scalar(
             select(func.sum(models.MaterialTransaction.total_amount)).where(
                 models.MaterialTransaction.type == models.MaterialTransactionType.purchase
             )
         )
     )
+    labour_expenditure = _to_float(
+        db.scalar(select(func.sum(models.LabourPayment.amount)))
+    )
+    expenditure = material_expenditure + labour_expenditure
     plants_planted = int(db.scalar(select(func.sum(models.Plantation.quantity))) or 0)
     mortality = int(db.scalar(select(func.sum(models.MortalityRecord.quantity_lost))) or 0)
     plants_outward = int(db.scalar(select(func.sum(models.PlantOutward.quantity))) or 0)
