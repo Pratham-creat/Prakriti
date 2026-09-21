@@ -49,8 +49,8 @@ function MenuContent({ active, onNavigate, onLogout, onClose }) {
                 onClick={() => navigate(item)}
                 className={`mb-1 w-full rounded-lg px-3 py-2.5 text-left text-sm transition ${
                   active === item
-                    ? "bg-emerald-50 font-semibold text-emerald-700"
-                    : "text-slate-700 hover:bg-emerald-50 hover:text-emerald-800"
+                    ? "!bg-emerald-50 font-semibold !text-emerald-700"
+                    : "!bg-white !text-slate-700 hover:!bg-emerald-50 hover:!text-emerald-800"
                 }`}
               >
                 {item}
@@ -107,7 +107,7 @@ export default function Sidebar({
                 type="button"
                 aria-label="Close navigation"
                 onClick={onMobileClose}
-                className="rounded-lg px-3 py-2 text-xl text-slate-500 hover:bg-slate-100"
+                className="!bg-white rounded-lg px-3 py-2 text-xl !text-slate-500 hover:!bg-slate-100"
               >
                 ×
               </button>
