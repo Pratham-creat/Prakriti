@@ -244,10 +244,10 @@ export default function PlantOutward() {
               setActiveTab(key);
               setError("");
             }}
-            className={`rounded-lg px-4 py-2 text-sm font-medium ${
+            className={`!rounded-lg !px-4 !py-2 !text-sm !font-medium ${
               activeTab === key
-                ? "bg-white text-green-700 shadow"
-                : "text-slate-600 hover:bg-white"
+                ? "!bg-white !text-green-700 shadow"
+                : "!bg-white !text-slate-600 hover:!bg-slate-50 hover:!text-slate-800"
             }`}
           >
             {label}
