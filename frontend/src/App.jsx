@@ -21,15 +21,18 @@ import { getToken, clearToken } from "./api";
 export default function App() {
   const [token, setTokenState] = useState(getToken());
   const [page, setPage] = useState("Dashboard");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   function handleLogin() {
     setTokenState(getToken());
     setPage("Dashboard");
+    setMobileMenuOpen(false);
   }
 
   function handleLogout() {
     clearToken();
     setTokenState(null);
+    setMobileMenuOpen(false);
   }
 
   if (!token) {
@@ -85,9 +88,19 @@ export default function App() {
         active={page}
         onNavigate={setPage}
         onLogout={handleLogout}
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={() => setMobileMenuOpen(false)}
       />
 
-      <main className="flex-1 min-w-0 p-6">
+      <main className="min-w-0 flex-1 p-4 pt-20 sm:p-6 sm:pt-6">
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(true)}
+          className="fixed left-4 top-4 z-40 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-800 shadow-sm lg:hidden"
+          aria-label="Open navigation"
+        >
+          ☰ Menu
+        </button>
         {renderPage()}
       </main>
     </div>
