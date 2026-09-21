@@ -104,9 +104,6 @@ export default function Login({ onLogin }) {
 
         </form>
 
-        <p className="mt-6 text-xs text-slate-400">
-          Demo: admin / admin123
-        </p>
 
       </div>
     </main>
