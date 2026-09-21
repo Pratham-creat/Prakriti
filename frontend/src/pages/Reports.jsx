@@ -65,7 +65,7 @@ export default function Reports() {
 
         <button
           onClick={loadReports}
-          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="!rounded-lg !border !border-slate-300 !bg-white !px-4 !py-2 !text-sm !font-medium !text-slate-700 hover:!bg-slate-50"
         >
           Refresh
         </button>
@@ -76,10 +76,10 @@ export default function Reports() {
           <button
             key={key}
             onClick={() => setActiveReport(key)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium ${
+            className={`!rounded-lg !px-4 !py-2 !text-sm !font-medium ${
               activeReport === key
-                ? "bg-white text-green-700 shadow"
-                : "text-slate-600 hover:bg-white"
+                ? "!bg-white !text-green-700 shadow"
+                : "!bg-white !text-slate-600 hover:!bg-slate-50 hover:!text-slate-800"
             }`}
           >
             {label}
