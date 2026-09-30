@@ -3,6 +3,7 @@ import api from "../api";
 import Field from "../components/Field";
 import Section from "../components/Section";
 import Table from "../components/Table";
+import ExcelActions from "../components/ExcelActions";
 
 export default function PlantOutward() {
   const [activeTab, setActiveTab] = useState("government");
@@ -838,6 +839,7 @@ export default function PlantOutward() {
       )}
 
       <Section title="Outward History">
+        <ExcelActions entity="plant_outward" onImported={() => window.location.reload()} />
         <Table
           editable
           entity="plant_outward"
