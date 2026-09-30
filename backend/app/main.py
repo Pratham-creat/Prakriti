@@ -1,4 +1,6 @@
 from collections import defaultdict
+import json
+from datetime import date, datetime
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -775,6 +777,260 @@ def outward_report(db: Session = Depends(get_db), user: models.User = Depends(ge
             "reference_number": row.reference_number,
             "recipient": row.recipient,
         }
+        for row in rows
+    ]
+
+
+EDITABLE_RECORDS = {
+    "fund_receipt": {
+        "model": models.FundReceipt,
+        "fields": {
+            "financial_year_id": "number",
+            "applicable_quarter_id": "number",
+            "scheme_head_id": "number",
+            "component_id": "number|null",
+            "amount": "number",
+            "receipt_date": "date",
+            "remarks": "text",
+        },
+    },
+    "material_transaction": {
+        "model": models.MaterialTransaction,
+        "fields": {
+            "type": "enum",
+            "material_id": "number",
+            "quantity": "number",
+            "unit": "text",
+            "rate": "number|null",
+            "supplier_source": "text",
+            "transaction_date": "date",
+            "financial_year_id": "number",
+            "applicable_quarter_id": "number",
+            "scheme_head_id": "number",
+            "remarks": "text",
+        },
+    },
+    "labour_payment": {
+        "model": models.LabourPayment,
+        "fields": {
+            "labour_id": "number",
+            "payment_date": "date",
+            "financial_year_id": "number",
+            "applicable_quarter_id": "number",
+            "scheme_head_id": "number",
+            "days": "number",
+            "wage_rate": "number",
+            "payment_method": "enum",
+            "reference_number": "text",
+            "cheque_number": "text",
+            "cheque_date": "date|null",
+            "cheque_bank": "text",
+            "remarks": "text",
+        },
+    },
+    "attendance": {
+        "model": models.Attendance,
+        "fields": {
+            "date": "date",
+            "activity": "text",
+            "financial_year_id": "number",
+            "applicable_quarter_id": "number",
+            "scheme_head_id": "number",
+            "species_id": "number|null",
+            "planting_method": "enum|null",
+            "remarks": "text",
+        },
+    },
+    "plantation": {
+        "model": models.Plantation,
+        "fields": {
+            "financial_year_id": "number",
+            "applicable_quarter_id": "number",
+            "scheme_head_id": "number",
+            "date": "date",
+            "species_id": "number",
+            "planting_method": "enum",
+            "quantity": "number",
+        },
+    },
+    "maintenance": {
+        "model": models.MaintenanceRecord,
+        "fields": {
+            "date": "date",
+            "plantation_id": "number|null",
+            "species_id": "number",
+            "planting_method": "enum",
+            "quantity_covered": "number",
+            "activity": "text",
+            "labour_used": "number|null",
+            "cost": "number|null",
+            "remarks": "text",
+        },
+    },
+    "mortality": {
+        "model": models.MortalityRecord,
+        "fields": {
+            "date": "date",
+            "plantation_id": "number|null",
+            "species_id": "number",
+            "planting_method": "enum",
+            "quantity_lost": "number",
+            "reason": "text",
+            "remarks": "text",
+        },
+    },
+    "plant_outward": {
+        "model": models.PlantOutward,
+        "fields": {
+            "type": "enum",
+            "date": "date",
+            "species_id": "number",
+            "planting_method": "enum",
+            "quantity": "number",
+            "rate": "number|null",
+            "reference_number": "text",
+            "recipient": "text",
+            "remarks": "text",
+        },
+    },
+}
+
+
+def _json_value(value):
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    if isinstance(value, enum.Enum):
+        return value.value
+    return value
+
+
+def _convert_edit_value(kind, value):
+    if value is None or value == "":
+        return None
+    base_kind = kind.replace("|null", "")
+    if base_kind == "number":
+        return float(value) if isinstance(value, float) or "." in str(value) else int(value)
+    if base_kind == "date":
+        return date.fromisoformat(str(value))
+    if base_kind == "enum":
+        return str(value)
+    return str(value)
+
+
+@app.get("/edit/{entity_type}/{record_id}")
+def get_edit_record(
+    entity_type: str,
+    record_id: int,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    require_role(user, {models.Role.admin, models.Role.operator})
+    config = EDITABLE_RECORDS.get(entity_type)
+    if not config:
+        raise HTTPException(status_code=404, detail="Record type is not editable")
+
+    row = db.get(config["model"], record_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Record not found")
+
+    fields = []
+    for name, kind in config["fields"].items():
+        value = getattr(row, name)
+        fields.append({
+            "name": name,
+            "type": kind,
+            "value": _json_value(value),
+        })
+
+    return {
+        "entity_type": entity_type,
+        "record_id": record_id,
+        "fields": fields,
+    }
+
+
+@app.put("/edit/{entity_type}/{record_id}")
+def update_edit_record(
+    entity_type: str,
+    record_id: int,
+    payload: schemas.EditUpdateRequest,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    require_role(user, {models.Role.admin, models.Role.operator})
+    if not payload.confirmed:
+        raise HTTPException(status_code=400, detail="You must confirm who is editing this record")
+
+    config = EDITABLE_RECORDS.get(entity_type)
+    if not config:
+        raise HTTPException(status_code=404, detail="Record type is not editable")
+
+    row = db.get(config["model"], record_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Record not found")
+
+    allowed = config["fields"]
+    unknown = set(payload.values) - set(allowed)
+    if unknown:
+        raise HTTPException(status_code=400, detail=f"Fields cannot be edited: {', '.join(sorted(unknown))}")
+
+    changed = {}
+    for name, value in payload.values.items():
+        converted = _convert_edit_value(allowed[name], value)
+        old_value = getattr(row, name)
+        if _json_value(old_value) != _json_value(converted):
+            setattr(row, name, converted)
+            changed[name] = {"from": _json_value(old_value), "to": _json_value(converted)}
+
+    if entity_type == "material_transaction" and ("quantity" in changed or "rate" in changed or "type" in changed):
+        row.total_amount = row.quantity * (row.rate or 0) if row.type == models.MaterialTransactionType.purchase else 0
+
+    if not changed:
+        return {"id": row.id, "changed": False, "message": "No changes detected"}
+
+    audit = models.EditAudit(
+        entity_type=entity_type,
+        record_id=row.id,
+        editor_name=payload.editor_name.strip(),
+        editor_email=payload.editor_email.strip(),
+        editor_mobile=payload.editor_mobile.strip(),
+        changed_fields=json.dumps(changed),
+        edited_at=datetime.utcnow(),
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(row)
+    return {"id": row.id, "changed": True, "changed_fields": changed}
+
+
+@app.get("/edit-history/{entity_type}/{record_id}", response_model=list[schemas.EditAuditOut])
+def edit_history(
+    entity_type: str,
+    record_id: int,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    require_role(user, {models.Role.admin, models.Role.operator})
+    rows = db.execute(
+        select(models.EditAudit)
+        .where(
+            models.EditAudit.entity_type == entity_type,
+            models.EditAudit.record_id == record_id,
+        )
+        .order_by(models.EditAudit.edited_at.desc(), models.EditAudit.id.desc())
+    ).scalars().all()
+
+    return [
+        schemas.EditAuditOut(
+            id=row.id,
+            entity_type=row.entity_type,
+            record_id=row.record_id,
+            editor_name=row.editor_name,
+            editor_email=row.editor_email,
+            editor_mobile=row.editor_mobile,
+            changed_fields=json.loads(row.changed_fields),
+            edited_at=row.edited_at.isoformat(),
+        )
         for row in rows
     ]
 
