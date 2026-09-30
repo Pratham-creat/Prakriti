@@ -222,6 +222,8 @@ export default function Plantation() {
 
       <Section title="Plantation History">
         <Table
+          editable
+          entity="plantation"
           columns={[
             { key: "date", label: "Date" },
             { key: "species_name", label: "Species" },
