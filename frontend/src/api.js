@@ -159,6 +159,22 @@ api.interceptors.response.use(
   }
 );
 
+// Edit workflow
+api.getEditableRecord = async (entityType, recordId) => {
+  const response = await api.get(`/edit/${entityType}/${recordId}`);
+  return response.data;
+};
+
+api.updateRecord = async (entityType, recordId, payload) => {
+  const response = await api.put(`/edit/${entityType}/${recordId}`, payload);
+  return response.data;
+};
+
+api.editHistory = async (entityType, recordId) => {
+  const response = await api.get(`/edit-history/${entityType}/${recordId}`);
+  return response.data;
+};
+
 // Token helpers
 export function setToken(token) {
   if (token) {
