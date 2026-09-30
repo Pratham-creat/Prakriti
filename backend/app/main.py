@@ -1027,6 +1027,59 @@ def _validate_excel_foreign_keys(db: Session, model, field_name: str, value):
         if not exists:
             raise ValueError(f"{field_name} references a record that does not exist: {value}")
 
+REPORT_EXPORTS = {
+    "fund": ("Fund Report", "/reports/fund"),
+    "plant": ("Plant Report", "/reports/plant"),
+    "labour": ("Labour Report", "/reports/labour"),
+    "outward": ("Outward Report", "/reports/outward"),
+}
+
+@app.get("/reports/{report_type}/export")
+def export_report_excel(
+    report_type: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    require_role(user, {models.Role.admin, models.Role.operator})
+    config = REPORT_EXPORTS.get(report_type)
+    if not config:
+        raise HTTPException(status_code=404, detail="Report export is not available")
+
+    report_rows = {
+        "fund": fund_report,
+        "plant": plant_report,
+        "labour": labour_report,
+        "outward": outward_report,
+    }[report_type](db, user)
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = config[0][:31]
+
+    headers = list(report_rows[0].keys()) if report_rows else []
+    sheet.append(headers)
+    for cell in sheet[1]:
+        cell.font = Font(bold=True)
+
+    for row in report_rows:
+        sheet.append([_excel_cell_value(row.get(header)) for header in headers])
+
+    sheet.freeze_panes = "A2"
+    for column in sheet.columns:
+        width = min(max(len(str(cell.value or "")) for cell in column) + 2, 40)
+        sheet.column_dimensions[column[0].column_letter].width = width
+
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+
+    filename = f"prakriti_report_{report_type}.xlsx"
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
 @app.get("/excel/{entity_type}/export")
 def export_excel(
     entity_type: str,
