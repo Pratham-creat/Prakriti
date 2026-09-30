@@ -209,6 +209,25 @@ api.importExcel = async (entityType, file) => {
   return response.data;
 };
 
+api.exportReportExcel = async (reportType) => {
+  const response = await api.get(`/reports/${reportType}/export`, {
+    responseType: "blob",
+  });
+
+  const contentDisposition = response.headers["content-disposition"] || "";
+  const match = contentDisposition.match(/filename="([^"]+)"/);
+  const filename = match?.[1] || `prakriti_report_${reportType}.xlsx`;
+
+  const url = window.URL.createObjectURL(response.data);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
 // Token helpers
 export function setToken(token) {
   if (token) {
