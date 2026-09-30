@@ -74,6 +74,7 @@ export default function Table({
           onSaved={() => {
             setEditingId(null);
             onEdited?.();
+            window.location.reload();
           }}
         />
       )}
