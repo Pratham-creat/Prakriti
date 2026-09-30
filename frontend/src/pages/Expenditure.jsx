@@ -196,6 +196,8 @@ export default function Expenditure() {
 
       <Section title="Labour Payment Expenditure">
         <Table
+          editable
+          entity="labour_payment"
           columns={[
             { key: "payment_date", label: "Date" },
             { key: "labour_name", label: "Worker" },
@@ -211,6 +213,8 @@ export default function Expenditure() {
 
       <Section title="Expenditure History">
         <Table
+          editable
+          entity="material_transaction"
           columns={[
             { key: "transaction_date", label: "Date" },
             { key: "type", label: "Type" },
