@@ -3,6 +3,7 @@ import api from "../api";
 import Field from "../components/Field";
 import Section from "../components/Section";
 import Table from "../components/Table";
+import ExcelActions from "../components/ExcelActions";
 
 export default function Labour() {
   const [labour, setLabour] = useState([]);
@@ -142,6 +143,7 @@ export default function Labour() {
       </Section>
 
       <Section title="Labour Workers">
+        <ExcelActions entity="labour" onImported={() => window.location.reload()} />
         <Table
           editable
           entity="labour"
