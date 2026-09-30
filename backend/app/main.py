@@ -1,13 +1,18 @@
 from collections import defaultdict
+from io import BytesIO
 import enum
 import json
 from datetime import date, datetime
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.sqltypes import Integer, Float, Numeric
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Font
 from . import auth, models, schemas, services
 from .database import Base, SessionLocal, engine, get_db
 from .seed import seed_data
@@ -928,6 +933,253 @@ def _convert_edit_value(kind, value):
         return str(value)
     return str(value)
 
+
+EXCEL_ENTITIES = {
+    "fund_receipt": {"title": "Fund Received", "model": models.FundReceipt},
+    "material_transaction": {"title": "Material Transactions", "model": models.MaterialTransaction},
+    "labour": {"title": "Labour", "model": models.Labour},
+    "labour_payment": {"title": "Labour Payments", "model": models.LabourPayment},
+    "plantation": {"title": "Plantation", "model": models.Plantation},
+    "maintenance": {"title": "Maintenance", "model": models.MaintenanceRecord},
+    "mortality": {"title": "Mortality", "model": models.MortalityRecord},
+    "plant_outward": {"title": "Plant Outward", "model": models.PlantOutward},
+}
+
+EXCEL_ENUMS = {
+    ("material_transaction", "type"): models.MaterialTransactionType,
+    ("labour_payment", "payment_method"): models.PaymentMethod,
+    ("plantation", "planting_method"): models.PlantingMethod,
+    ("maintenance", "planting_method"): models.PlantingMethod,
+    ("mortality", "planting_method"): models.PlantingMethod,
+    ("plant_outward", "type"): models.OutwardType,
+    ("plant_outward", "planting_method"): models.PlantingMethod,
+}
+
+def _excel_fields(entity_type: str):
+    config = EDITABLE_RECORDS.get(entity_type)
+    if not config:
+        raise HTTPException(status_code=404, detail="Excel import/export is not available for this module")
+    return list(config["fields"].keys())
+
+def _excel_cell_value(value):
+    if isinstance(value, enum.Enum):
+        return value.value
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    return value
+
+def _excel_convert(entity_type: str, field_name: str, value, model):
+    column = model.__table__.columns[field_name]
+    if value is None or value == "":
+        if not column.nullable:
+            raise ValueError(f"{field_name} is required")
+        return None
+
+    enum_class = EXCEL_ENUMS.get((entity_type, field_name))
+    if enum_class:
+        raw = str(value).strip()
+        try:
+            return enum_class(raw)
+        except ValueError:
+            allowed = ", ".join(item.value for item in enum_class)
+            raise ValueError(f"{field_name} must be one of: {allowed}")
+
+    if isinstance(column.type, Integer):
+        return int(float(value))
+    if isinstance(column.type, (Float, Numeric)):
+        return float(value)
+    if isinstance(column.type, Date):
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+        return date.fromisoformat(str(value).strip())
+
+    return str(value).strip()
+
+def _validate_excel_foreign_keys(db: Session, model, field_name: str, value):
+    if value is None:
+        return
+    column = model.__table__.columns[field_name]
+    for foreign_key in column.foreign_keys:
+        target_column = foreign_key.column
+        exists = db.execute(
+            select(target_column.table).where(target_column == value)
+        ).first()
+        if not exists:
+            raise ValueError(f"{field_name} references a record that does not exist: {value}")
+
+@app.get("/excel/{entity_type}/export")
+def export_excel(
+    entity_type: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    require_role(user, {models.Role.admin, models.Role.operator})
+    config = EXCEL_ENTITIES.get(entity_type)
+    if not config:
+        raise HTTPException(status_code=404, detail="Excel export is not available for this module")
+
+    fields = _excel_fields(entity_type)
+    rows = db.execute(select(config["model"]).order_by(config["model"].id)).scalars().all()
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = config["title"][:31]
+    headers = ["id", *fields]
+    sheet.append(headers)
+    for cell in sheet[1]:
+        cell.font = Font(bold=True)
+
+    for row in rows:
+        sheet.append([row.id, *[_excel_cell_value(getattr(row, field)) for field in fields]])
+
+    sheet.freeze_panes = "A2"
+    for column in sheet.columns:
+        width = min(max(len(str(cell.value or "")) for cell in column) + 2, 40)
+        sheet.column_dimensions[column[0].column_letter].width = width
+
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+    filename = f"prakriti_{entity_type}.xlsx"
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+@app.post("/excel/{entity_type}/import")
+async def import_excel(
+    entity_type: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    require_role(user, {models.Role.admin, models.Role.operator})
+    config = EXCEL_ENTITIES.get(entity_type)
+    if not config:
+        raise HTTPException(status_code=404, detail="Excel import is not available for this module")
+
+    if not file.filename or not file.filename.lower().endswith(".xlsx"):
+        raise HTTPException(status_code=400, detail="Only .xlsx files are supported")
+
+    raw = await file.read()
+    if len(raw) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Excel file is too large. Maximum size is 10 MB")
+
+    try:
+        workbook = load_workbook(BytesIO(raw), read_only=True, data_only=True)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid Excel file: {exc}") from exc
+
+    sheet = workbook.active
+    rows = list(sheet.iter_rows(values_only=True))
+    workbook.close()
+
+    if not rows:
+        raise HTTPException(status_code=400, detail="Excel file is empty")
+
+    fields = _excel_fields(entity_type)
+    headers = [str(value).strip() if value is not None else "" for value in rows[0]]
+    allowed_headers = {"id", *fields}
+    unknown_headers = set(headers) - allowed_headers
+    if unknown_headers:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown Excel columns: {', '.join(sorted(h for h in unknown_headers if h))}",
+        )
+    if "id" not in headers:
+        headers = ["id", *headers]
+        rows = [tuple([None, *row]) for row in rows[1:]]
+    else:
+        rows = rows[1:]
+
+    if not any(header in fields for header in headers):
+        raise HTTPException(status_code=400, detail="Excel file has no importable data columns")
+
+    prepared = []
+    errors = []
+    for excel_row_number, values in enumerate(rows, start=2):
+        if all(value is None or value == "" for value in values):
+            continue
+        payload = {}
+        try:
+            record_id = values[headers.index("id")] if "id" in headers else None
+            if record_id not in (None, ""):
+                record_id = int(float(record_id))
+            for index, field_name in enumerate(headers):
+                if field_name == "" or field_name == "id":
+                    continue
+                value = _excel_convert(entity_type, field_name, values[index], config["model"])
+                _validate_excel_foreign_keys(db, config["model"], field_name, value)
+                payload[field_name] = value
+            if not payload:
+                raise ValueError("No values supplied")
+            prepared.append((excel_row_number, record_id, payload))
+        except (ValueError, TypeError) as exc:
+            errors.append(f"Row {excel_row_number}: {exc}")
+
+    if errors:
+        raise HTTPException(status_code=400, detail={"message": "Import validation failed", "errors": errors})
+
+    created = 0
+    updated = 0
+    audit_rows = []
+    try:
+        for excel_row_number, record_id, payload in prepared:
+            row = db.get(config["model"], record_id) if record_id is not None else None
+            if record_id is not None and not row:
+                raise ValueError(f"Row {excel_row_number}: record id {record_id} was not found")
+
+            if row:
+                changed = {}
+                for field_name, value in payload.items():
+                    old = getattr(row, field_name)
+                    if _json_value(old) != _json_value(value):
+                        setattr(row, field_name, value)
+                        changed[field_name] = {"from": _json_value(old), "to": _json_value(value)}
+                if entity_type == "material_transaction" and any(
+                    field in changed for field in ("quantity", "rate", "type")
+                ):
+                    row.total_amount = (
+                        row.quantity * (row.rate or 0)
+                        if row.type == models.MaterialTransactionType.purchase
+                        else 0
+                    )
+                if changed:
+                    audit_rows.append(models.EditAudit(
+                        entity_type=entity_type,
+                        record_id=row.id,
+                        editor_name=user.username,
+                        editor_email="",
+                        editor_mobile="",
+                        changed_fields=json.dumps(changed),
+                        edited_at=datetime.utcnow(),
+                    ))
+                updated += 1
+            else:
+                if entity_type == "material_transaction":
+                    payload["total_amount"] = (
+                        payload["quantity"] * (payload.get("rate") or 0)
+                        if payload["type"] == models.MaterialTransactionType.purchase
+                        else 0
+                    )
+                row = config["model"](**payload)
+                db.add(row)
+                db.flush()
+                created += 1
+
+        db.add_all(audit_rows)
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        detail = str(exc)
+        if not detail.startswith("Row "):
+            detail = f"Import failed: {detail}"
+        raise HTTPException(status_code=400, detail=detail) from exc
+
+    return {"message": "Excel import completed", "created": created, "updated": updated, "rows_processed": created + updated}
 
 @app.get("/edit/{entity_type}/{record_id}")
 def get_edit_record(
