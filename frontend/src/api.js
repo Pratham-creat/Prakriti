@@ -175,6 +175,40 @@ api.editHistory = async (entityType, recordId) => {
   return response.data;
 };
 
+
+// Excel import / export
+api.exportExcel = async (entityType) => {
+  const response = await api.get(`/excel/${entityType}/export`, {
+    responseType: "blob",
+  });
+
+  const contentDisposition = response.headers["content-disposition"] || "";
+  const match = contentDisposition.match(/filename="([^"]+)"/);
+  const filename = match?.[1] || `prakriti_${entityType}.xlsx`;
+
+  const url = window.URL.createObjectURL(response.data);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
+api.importExcel = async (entityType, file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await api.post(`/excel/${entityType}/import`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+};
+
 // Token helpers
 export function setToken(token) {
   if (token) {
