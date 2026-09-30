@@ -759,6 +759,7 @@ def labour_report(db: Session = Depends(get_db), user: models.User = Depends(get
     rows = db.execute(select(models.Attendance).order_by(models.Attendance.date)).scalars().all()
     return [
         {
+            "id": row.id,
             "date": row.date,
             "activity": row.activity,
             "total_workers": total_workers,
@@ -776,6 +777,7 @@ def outward_report(db: Session = Depends(get_db), user: models.User = Depends(ge
     rows = db.execute(select(models.PlantOutward).order_by(models.PlantOutward.date)).scalars().all()
     return [
         {
+            "id": row.id,
             "type": row.type,
             "date": row.date,
             "species": species_map.get(row.species_id),
