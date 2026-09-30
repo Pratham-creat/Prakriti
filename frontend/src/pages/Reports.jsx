@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../api";
 import Section from "../components/Section";
 import Table from "../components/Table";
+import ReportExcelActions from "../components/ReportExcelActions";
 
 export default function Reports() {
   const [activeReport, setActiveReport] = useState("fund");
@@ -101,6 +102,7 @@ export default function Reports() {
         <>
           {activeReport === "fund" && (
             <Section title="Fund Report">
+              <ReportExcelActions report="fund" />
               <Table
                 columns={[
                   { key: "quarter", label: "Quarter" },
@@ -116,6 +118,7 @@ export default function Reports() {
 
           {activeReport === "plant" && (
             <Section title="Plant Report">
+              <ReportExcelActions report="plant" />
               <Table
                 columns={[
                   { key: "species", label: "Species" },
@@ -132,7 +135,10 @@ export default function Reports() {
 
           {activeReport === "labour" && (
             <Section title="Labour Report">
+              <ReportExcelActions report="labour" />
               <Table
+                editable
+                entity="attendance"
                 columns={[
                   { key: "date", label: "Date" },
                   { key: "activity", label: "Activity" },
@@ -148,13 +154,16 @@ export default function Reports() {
 
           {activeReport === "outward" && (
             <Section title="Outward Report">
+              <ReportExcelActions report="outward" />
               <Table
+                editable
+                entity="plant_outward"
                 columns={[
                   { key: "type", label: "Type" },
                   { key: "date", label: "Date" },
                   { key: "species", label: "Species" },
                   { key: "quantity", label: "Quantity" },
-                  { key: "reference", label: "Reference" },
+                  { key: "reference_number", label: "Reference" },
                   { key: "recipient", label: "Recipient / Institution" },
                 ]}
                 rows={outward}
