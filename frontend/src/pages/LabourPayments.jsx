@@ -183,6 +183,8 @@ export default function LabourPayments() {
 
       <Section title="Labour Payment History">
         <Table
+          editable
+          entity="labour_payment"
           columns={[
             { key: "payment_date", label: "Date" },
             { key: "labour_name", label: "Worker" },
