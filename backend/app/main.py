@@ -945,6 +945,13 @@ EXCEL_ENTITIES = {
     "plant_outward": {"title": "Plant Outward", "model": models.PlantOutward},
 }
 
+EXCEL_IMPORT_ONLY_FIELDS = {
+    "labour": {
+        "bank_account": "text",
+        "aadhaar": "text",
+    },
+}
+
 EXCEL_ENUMS = {
     ("material_transaction", "type"): models.MaterialTransactionType,
     ("labour_payment", "payment_method"): models.PaymentMethod,
@@ -961,6 +968,9 @@ def _excel_fields(entity_type: str):
         raise HTTPException(status_code=404, detail="Excel import/export is not available for this module")
     return list(config["fields"].keys())
 
+def _excel_import_fields(entity_type: str):
+    return {**EDITABLE_RECORDS[entity_type]["fields"], **EXCEL_IMPORT_ONLY_FIELDS.get(entity_type, {})}
+
 def _excel_cell_value(value):
     if isinstance(value, enum.Enum):
         return value.value
@@ -969,6 +979,12 @@ def _excel_cell_value(value):
     return value
 
 def _excel_convert(entity_type: str, field_name: str, value, model):
+    import_only = EXCEL_IMPORT_ONLY_FIELDS.get(entity_type, {})
+    if field_name in import_only:
+        if value is None or value == "":
+            raise ValueError(f"{field_name} is required")
+        return str(value).strip()
+
     column = model.__table__.columns[field_name]
     if value is None or value == "":
         if not column.nullable:
@@ -1082,7 +1098,8 @@ async def import_excel(
 
     fields = _excel_fields(entity_type)
     headers = [str(value).strip() if value is not None else "" for value in rows[0]]
-    allowed_headers = {"id", *fields}
+    import_fields = _excel_import_fields(entity_type)
+    allowed_headers = {"id", *import_fields}
     unknown_headers = set(headers) - allowed_headers
     if unknown_headers:
         raise HTTPException(
@@ -1112,7 +1129,8 @@ async def import_excel(
                 if field_name == "" or field_name == "id":
                     continue
                 value = _excel_convert(entity_type, field_name, values[index], config["model"])
-                _validate_excel_foreign_keys(db, config["model"], field_name, value)
+                if field_name not in EXCEL_IMPORT_ONLY_FIELDS.get(entity_type, {}):
+                    _validate_excel_foreign_keys(db, config["model"], field_name, value)
                 payload[field_name] = value
             if not payload:
                 raise ValueError("No values supplied")
