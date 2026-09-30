@@ -2,6 +2,7 @@ import enum
 from sqlalchemy import (
     Boolean,
     Date,
+    DateTime,
     Enum,
     Float,
     ForeignKey,
@@ -49,6 +50,19 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[Role] = mapped_column(Enum(Role), nullable=False)
+
+
+class EditAudit(Base):
+    __tablename__ = "edit_audits"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    entity_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    record_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    editor_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    editor_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    editor_mobile: Mapped[str] = mapped_column(String(20), nullable=False)
+    changed_fields: Mapped[str] = mapped_column(Text, nullable=False)
+    edited_at: Mapped[str] = mapped_column(DateTime, nullable=False)
 
 
 class FinancialYear(Base):
