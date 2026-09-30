@@ -143,6 +143,8 @@ export default function Labour() {
 
       <Section title="Labour Workers">
         <Table
+          editable
+          entity="labour"
           columns={[
             { key: "name", label: "Name" },
             { key: "mobile", label: "Mobile" },
