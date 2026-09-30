@@ -86,6 +86,8 @@ export default function Attendance() {
       </Section>
       <Section title="Attendance History">
         <Table
+          editable
+          entity="attendance"
           columns={[
             { key: 'date', label: 'Date' },
             { key: 'activity', label: 'Activity' },
