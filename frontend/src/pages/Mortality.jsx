@@ -3,6 +3,7 @@ import api from "../api";
 import Field from "../components/Field";
 import Section from "../components/Section";
 import Table from "../components/Table";
+import ExcelActions from "../components/ExcelActions";
 
 export default function Mortality() {
   const [plantations, setPlantations] = useState([]);
@@ -199,6 +200,7 @@ export default function Mortality() {
       </Section>
 
       <Section title="Mortality History">
+        <ExcelActions entity="mortality" onImported={() => window.location.reload()} />
         <Table
           editable
           entity="mortality"
