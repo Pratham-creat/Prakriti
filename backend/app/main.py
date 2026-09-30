@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.sqltypes import Integer, Float, Numeric
+from sqlalchemy.sql.sqltypes import Date, Integer, Float, Numeric
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font
 from . import auth, models, schemas, services
