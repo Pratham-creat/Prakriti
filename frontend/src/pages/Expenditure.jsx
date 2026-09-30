@@ -3,6 +3,7 @@ import api from "../api";
 import Field from "../components/Field";
 import Section from "../components/Section";
 import Table from "../components/Table";
+import ExcelActions from "../components/ExcelActions";
 
 const today = () => new Date().toISOString().split("T")[0];
 
@@ -195,6 +196,7 @@ export default function Expenditure() {
       </Section>
 
       <Section title="Labour Payment Expenditure">
+        <ExcelActions entity="labour_payment" onImported={() => window.location.reload()} />
         <Table
           editable
           entity="labour_payment"
@@ -212,6 +214,7 @@ export default function Expenditure() {
       </Section>
 
       <Section title="Expenditure History">
+        <ExcelActions entity="material_transaction" onImported={() => window.location.reload()} />
         <Table
           editable
           entity="material_transaction"
