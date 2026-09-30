@@ -223,6 +223,8 @@ export default function Maintenance() {
 
       <Section title="Maintenance History">
         <Table
+          editable
+          entity="maintenance"
           columns={[
             { key: "date", label: "Date" },
             { key: "activity", label: "Activity" },
