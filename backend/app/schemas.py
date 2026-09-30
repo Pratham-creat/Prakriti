@@ -187,6 +187,26 @@ class LabourPaymentCreate(BaseModel):
     remarks: str | None = None
 
 
+class EditUpdateRequest(BaseModel):
+    confirmed: bool
+    editor_name: str = Field(min_length=1, max_length=120)
+    editor_email: str = Field(min_length=3, max_length=255)
+    editor_mobile: str = Field(min_length=5, max_length=20)
+    values: dict[str, object]
+
+
+class EditAuditOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    entity_type: str
+    record_id: int
+    editor_name: str
+    editor_email: str
+    editor_mobile: str
+    changed_fields: dict[str, object]
+    edited_at: str
+
+
 class DashboardSummary(BaseModel):
     funds_received: float
     expenditure: float
