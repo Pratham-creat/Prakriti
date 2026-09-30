@@ -231,6 +231,8 @@ export default function FundReceived() {
 
       <Section title="Recorded Receipts">
         <Table
+          editable
+          entity="fund_receipt"
           columns={[
             {
               key: 'receipt_date',
