@@ -3,6 +3,7 @@ import Field from '../components/Field'
 import Section from '../components/Section'
 import Table from '../components/Table'
 import { api } from '../api'
+import ExcelActions from '../components/ExcelActions'
 
 const empty = {
   financial_year_id: 1,
@@ -230,6 +231,7 @@ export default function FundReceived() {
       </Section>
 
       <Section title="Recorded Receipts">
+        <ExcelActions entity="fund_receipt" onImported={() => window.location.reload()} />
         <Table
           editable
           entity="fund_receipt"
