@@ -839,6 +839,8 @@ export default function PlantOutward() {
 
       <Section title="Outward History">
         <Table
+          editable
+          entity="plant_outward"
           columns={[
             { key: "date", label: "Date" },
             { key: "type", label: "Type" },
