@@ -811,6 +811,15 @@ EDITABLE_RECORDS = {
             "remarks": "text",
         },
     },
+    "labour": {
+        "model": models.Labour,
+        "fields": {
+            "name": "text",
+            "mobile": "text",
+            "samagra_id": "text",
+            "ifsc": "text",
+        },
+    },
     "labour_payment": {
         "model": models.LabourPayment,
         "fields": {
