@@ -200,6 +200,8 @@ export default function Mortality() {
 
       <Section title="Mortality History">
         <Table
+          editable
+          entity="mortality"
           columns={[
             { key: "date", label: "Date" },
             { key: "species_name", label: "Species" },
