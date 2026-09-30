@@ -916,6 +916,8 @@ def _json_value(value):
 
 def _convert_edit_value(kind, value):
     if value is None or value == "":
+        if "|null" not in kind:
+            raise HTTPException(status_code=400, detail="A required field cannot be empty")
         return None
     base_kind = kind.replace("|null", "")
     if base_kind == "number":
