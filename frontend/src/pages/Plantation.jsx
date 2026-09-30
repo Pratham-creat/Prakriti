@@ -3,6 +3,7 @@ import api from "../api";
 import Field from "../components/Field";
 import Section from "../components/Section";
 import Table from "../components/Table";
+import ExcelActions from "../components/ExcelActions";
 
 export default function Plantation() {
   const [plantations, setPlantations] = useState([]);
@@ -221,6 +222,7 @@ export default function Plantation() {
       </Section>
 
       <Section title="Plantation History">
+        <ExcelActions entity="plantation" onImported={() => window.location.reload()} />
         <Table
           editable
           entity="plantation"
