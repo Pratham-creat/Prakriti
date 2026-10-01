@@ -941,6 +941,7 @@ EXCEL_ENTITIES = {
     "material_transaction": {"title": "Material Transactions", "model": models.MaterialTransaction},
     "labour": {"title": "Labour", "model": models.Labour},
     "labour_payment": {"title": "Labour Payments", "model": models.LabourPayment},
+    "attendance": {"title": "Labour Attendance", "model": models.Attendance},
     "plantation": {"title": "Plantation", "model": models.Plantation},
     "maintenance": {"title": "Maintenance", "model": models.MaintenanceRecord},
     "mortality": {"title": "Mortality", "model": models.MortalityRecord},
@@ -952,11 +953,15 @@ EXCEL_IMPORT_ONLY_FIELDS = {
         "bank_account": "text",
         "aadhaar": "text",
     },
+    "attendance": {
+        "present_labour_ids": "text",
+    },
 }
 
 EXCEL_ENUMS = {
     ("material_transaction", "type"): models.MaterialTransactionType,
     ("labour_payment", "payment_method"): models.PaymentMethod,
+    ("attendance", "planting_method"): models.PlantingMethod,
     ("plantation", "planting_method"): models.PlantingMethod,
     ("maintenance", "planting_method"): models.PlantingMethod,
     ("mortality", "planting_method"): models.PlantingMethod,
@@ -1092,18 +1097,28 @@ def export_excel(
         raise HTTPException(status_code=404, detail="Excel export is not available for this module")
 
     fields = _excel_fields(entity_type)
+    export_fields = [*fields]
+    if entity_type == "attendance":
+        export_fields.append("present_labour_ids")
     rows = db.execute(select(config["model"]).order_by(config["model"].id)).scalars().all()
 
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = config["title"][:31]
-    headers = ["id", *fields]
+    headers = ["id", *export_fields]
     sheet.append(headers)
     for cell in sheet[1]:
         cell.font = Font(bold=True)
 
     for row in rows:
-        sheet.append([row.id, *[_excel_cell_value(getattr(row, field)) for field in fields]])
+        values = []
+        for field in export_fields:
+            if entity_type == "attendance" and field == "present_labour_ids":
+                value = ",".join(str(entry.labour_id) for entry in row.entries if entry.present)
+            else:
+                value = getattr(row, field)
+            values.append(_excel_cell_value(value))
+        sheet.append([row.id, *values])
 
     sheet.freeze_panes = "A2"
     for column in sheet.columns:
@@ -1187,6 +1202,24 @@ async def import_excel(
                 if field_name not in EXCEL_IMPORT_ONLY_FIELDS.get(entity_type, {}):
                     _validate_excel_foreign_keys(db, config["model"], field_name, value)
                 payload[field_name] = value
+            if entity_type == "attendance":
+                raw_ids = payload.pop("present_labour_ids", "")
+                present_ids = []
+                if raw_ids:
+                    for raw_id in raw_ids.split(","):
+                        raw_id = raw_id.strip()
+                        if not raw_id:
+                            continue
+                        try:
+                            present_ids.append(int(raw_id))
+                        except ValueError as exc:
+                            raise ValueError(f"present_labour_ids contains an invalid labour id: {raw_id}") from exc
+                    if len(present_ids) != len(set(present_ids)):
+                        raise ValueError("present_labour_ids contains duplicate labour ids")
+                    for labour_id in present_ids:
+                        if not db.get(models.Labour, labour_id):
+                            raise ValueError(f"present_labour_ids references a labour record that does not exist: {labour_id}")
+                payload["_present_labour_ids"] = present_ids
             if not payload:
                 raise ValueError("No values supplied")
             prepared.append((excel_row_number, record_id, payload))
@@ -1201,6 +1234,7 @@ async def import_excel(
     audit_rows = []
     try:
         for excel_row_number, record_id, payload in prepared:
+            present_ids = payload.pop("_present_labour_ids", None) if entity_type == "attendance" else None
             row = db.get(config["model"], record_id) if record_id is not None else None
             if record_id is not None and not row:
                 raise ValueError(f"Row {excel_row_number}: record id {record_id} was not found")
@@ -1230,6 +1264,13 @@ async def import_excel(
                         changed_fields=json.dumps(changed),
                         edited_at=datetime.utcnow(),
                     ))
+                if entity_type == "attendance" and present_ids is not None:
+                    row.entries.clear()
+                    db.flush()
+                    db.add_all([
+                        models.AttendanceEntry(attendance_id=row.id, labour_id=labour_id, present=True)
+                        for labour_id in present_ids
+                    ])
                 updated += 1
             else:
                 if entity_type == "material_transaction":
@@ -1241,6 +1282,11 @@ async def import_excel(
                 row = config["model"](**payload)
                 db.add(row)
                 db.flush()
+                if entity_type == "attendance" and present_ids is not None:
+                    db.add_all([
+                        models.AttendanceEntry(attendance_id=row.id, labour_id=labour_id, present=True)
+                        for labour_id in present_ids
+                    ])
                 created += 1
 
         db.add_all(audit_rows)
