@@ -3,6 +3,7 @@ import Field from '../components/Field'
 import Section from '../components/Section'
 import Table from '../components/Table'
 import { api } from '../api'
+import ExcelActions from '../components/ExcelActions'
 
 const initialForm = {
   date: new Date().toISOString().slice(0, 10),
@@ -85,6 +86,9 @@ export default function Attendance() {
         {message && <p className="mt-4 text-sm text-slate-600">{message}</p>}
       </Section>
       <Section title="Attendance History">
+        <div className="mb-4 flex justify-end">
+          <ExcelActions entity="attendance" onImported={() => load()} />
+        </div>
         <Table
           editable
           entity="attendance"
