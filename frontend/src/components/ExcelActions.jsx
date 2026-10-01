@@ -58,7 +58,7 @@ export default function ExcelActions({ entity, onImported }) {
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={Boolean(loading)}
-        className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading === "import" ? "Importing..." : "Import Excel"}
       </button>
@@ -67,7 +67,7 @@ export default function ExcelActions({ entity, onImported }) {
         type="button"
         onClick={exportData}
         disabled={Boolean(loading)}
-        className="rounded-lg border border-emerald-300 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+        className="rounded-lg bg-slate-700 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading === "export" ? "Exporting..." : "Export Excel"}
       </button>
