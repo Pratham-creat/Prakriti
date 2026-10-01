@@ -122,8 +122,8 @@ export default function Reports() {
               <Table
                 columns={[
                   { key: "species", label: "Species" },
-                  { key: "polythene", label: "Polythene" },
-                  { key: "bed", label: "Bed" },
+                  { key: "method", label: "Planting Method" },
+                  { key: "planted", label: "Planted" },
                   { key: "mortality", label: "Mortality" },
                   { key: "outward", label: "Outward" },
                   { key: "current_stock", label: "Current Stock" },
